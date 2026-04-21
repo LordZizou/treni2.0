@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BinarioLive</title>
+
+    <!-- font google -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- leaflet per la mappa -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <a class="logo" href="#">
+            <div class="logo-icon">🚆</div>
+            BinarioLive
+        </a>
+
+        <!-- treni in circolazione live -->
+        <div class="treni-live">
+            <div class="dot-live"></div>
+            <span class="treni-count" id="treni-live-count">-</span>
+            <span data-i18n="treniCircolanti">Trains running</span>
+        </div>
+
+        <div class="navbar-controls">
+            <!-- switch lingua -->
+            <button class="btn-lang" data-lang="it" onclick="cambiaLingua('it')">IT</button>
+            <button class="btn-lang" data-lang="en" onclick="cambiaLingua('en')">EN</button>
+
+            <!-- switch tema chiaro/scuro -->
+            <div class="theme-switch" onclick="toggleTema()">
+                <span style="font-size:0.9rem">☀️</span>
+                <div class="switch-track" id="switchTrack">
+                    <div class="switch-thumb"></div>
+                </div>
+                <span style="font-size:0.9rem">🌙</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- CONTENUTO PRINCIPALE -->
+    <main class="main">
+
+        <!-- BARRE DI RICERCA -->
+        <div class="search-section">
+            <div class="search-row">
+
+                <!-- ricerca stazione -->
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input
+                        type="text"
+                        id="inputStazione"
+                        class="search-input"
+                        placeholder="Cerca stazione..."
+                        autocomplete="off">
+                    <div class="autocomplete-list" id="listaStazioni"></div>
+                </div>
+
+                <!-- ricerca numero treno -->
+                <div class="search-box">
+                    <span class="search-icon">🚆</span>
+                    <input
+                        type="text"
+                        id="inputTreno"
+                        class="search-input"
+                        placeholder="Cerca numero treno..."
+                        autocomplete="off">
+                    <div class="autocomplete-list" id="listaTreni"></div>
+                </div>
+
+            </div>
+
+            <!-- stazioni cercate di recente -->
+            <div class="recenti" id="stazioni-recenti" style="display:none"></div>
+        </div>
+
+        <!-- GRIGLIA PRINCIPALE -->
+        <div class="content-grid">
+
+            <!-- PANNELLO TRENI (sinistra) -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="tabs">
+                        <button class="tab active" id="tabPartenze" onclick="cambiTab('partenze')">Partenze</button>
+                        <button class="tab" id="tabArrivi" onclick="cambiTab('arrivi')">Arrivi</button>
+                    </div>
+                    <button class="btn-mappa" onclick="document.getElementById('modale').classList.add('show'); inizializzaMappa();">
+                        🗺 Mappa
+                    </button>
+                </div>
+
+                <div style="overflow-x:auto">
+                    <table class="trains-table">
+                        <thead>
+                            <tr>
+                                <th id="thTreno">TRENO</th>
+                                <th id="thDestOrg">DESTINAZIONE</th>
+                                <th id="thPrevisto">PREVISTO</th>
+                                <th id="thEffettivo" class="col-effettivo">EFFETTIVO</th>
+                                <th id="thBinario" class="col-piattaforma">BINARIO</th>
+                                <th id="thStato">STATO</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-treni">
+                            <tr>
+                                <td colspan="6">
+                                    <div class="empty-state">
+                                        <div class="empty-icon">🚉</div>
+                                        <div class="empty-text">Cerca una stazione per vedere i treni</div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- SIDEBAR DESTRA -->
+            <div class="sidebar">
+
+                <!-- statistiche -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-title titolo-stats">Statistiche</span>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="stat-numero stat-totale" id="stat-totale">-</div>
+                            <div class="stat-label label-totale">TOTALE</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-numero stat-puntuale" id="stat-orario">-</div>
+                            <div class="stat-label label-orario">IN ORARIO</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-numero stat-ritardo" id="stat-ritardo">-</div>
+                            <div class="stat-label label-ritardo">RITARDO</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-numero stat-cancellato" id="stat-cancellati">-</div>
+                            <div class="stat-label label-cancellati">CANCELLATI</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- meteo -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-title titolo-meteo">Meteo</span>
+                    </div>
+                    <div id="meteo-content">
+                        <div style="padding:20px;color:var(--text2);font-size:0.85rem;text-align:center">
+                            Seleziona una stazione per vedere il meteo
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- MODALE DETTAGLIO TRENO + MAPPA -->
+    <div class="modal-overlay" id="modale">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title" id="titolo-modale">Percorso treno</span>
+                <button class="btn-close" onclick="chiudiModale()">✕</button>
+            </div>
+            <div class="modal-body">
+                <!-- mappa leaflet -->
+                <div id="mappa"></div>
+
+                <!-- lista fermate -->
+                <ul class="fermate-list" id="fermate-list">
+                    <div class="empty-state">
+                        <div class="empty-text">Seleziona un treno</div>
+                    </div>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- scripts -->
+    <script src="js/i18n.js"></script>
+    <script src="js/map.js"></script>
+    <script src="js/app.js"></script>
+
+</body>
+</html>
