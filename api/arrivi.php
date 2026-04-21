@@ -1,6 +1,7 @@
 <?php
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
+require_once 'helper.php';
 
 $codice = isset($_GET['codice']) ? trim($_GET['codice']) : '';
 
@@ -9,12 +10,9 @@ if (!$codice) {
     exit;
 }
 
-// stessa cosa delle partenze ma endpoint arrivi
-$orario = rawurlencode(date('D') . '+' . date('M') . '+' . date('d') . '+' . date('Y') . '+' . date('H:i:s'));
+$url = "http://www.viaggiatreno.it/infomobilita/resteasy/viaggiatreno/arrivi/$codice/" . orario_trenitalia();
 
-$url = "http://www.viaggiatreno.it/infomobilita/resteasy/viaggiatreno/arrivi/$codice/" . $orario;
-
-$risposta = file_get_contents($url);
+$risposta = chiama_api($url);
 
 if ($risposta === false) {
     echo json_encode(['error' => 'errore api trenitalia']);
@@ -22,10 +20,4 @@ if ($risposta === false) {
 }
 
 $dati = json_decode($risposta, true);
-
-if (!$dati) {
-    echo json_encode([]);
-    exit;
-}
-
-echo json_encode($dati);
+echo json_encode($dati ?: []);

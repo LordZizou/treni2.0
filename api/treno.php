@@ -1,6 +1,7 @@
 <?php
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
+require_once 'helper.php';
 
 $numero = isset($_GET['numero']) ? trim($_GET['numero']) : '';
 $origine = isset($_GET['origine']) ? trim($_GET['origine']) : '';
@@ -10,18 +11,16 @@ if (!$numero) {
     exit;
 }
 
-// se non ho il codice origine lo cerco con l'autocomplete
+// se non ho il codice origine lo cerco in automatico
 if (!$origine) {
     $urlCerca = 'http://www.viaggiatreno.it/infomobilita/resteasy/viaggiatreno/cercaNumeroTrenoTrenoAutocomplete/' . $numero;
-    $risCerca = file_get_contents($urlCerca);
+    $risCerca = chiama_api($urlCerca);
 
     if ($risCerca && trim($risCerca) !== '') {
-        // la risposta e' tipo "2946 - MILANO CENTRALE|S01700\n"
         $righe = explode("\n", trim($risCerca));
-        $prima = $righe[0];
-        $parti = explode('|', $prima);
+        $parti = explode('|', $righe[0]);
         if (count($parti) >= 2) {
-            $origine = $parti[1];
+            $origine = trim($parti[1]);
         }
     }
 }
@@ -31,10 +30,9 @@ if (!$origine) {
     exit;
 }
 
-// chiamo l'api per il percorso completo del treno
 $url = "http://www.viaggiatreno.it/infomobilita/resteasy/viaggiatreno/andamentoTreno/$origine/$numero";
 
-$risposta = file_get_contents($url);
+$risposta = chiama_api($url);
 
 if ($risposta === false) {
     echo json_encode(['error' => 'errore api']);
@@ -42,10 +40,4 @@ if ($risposta === false) {
 }
 
 $dati = json_decode($risposta, true);
-
-if (!$dati) {
-    echo json_encode(['error' => 'dati non trovati']);
-    exit;
-}
-
-echo json_encode($dati);
+echo json_encode($dati ?: ['error' => 'dati non trovati']);

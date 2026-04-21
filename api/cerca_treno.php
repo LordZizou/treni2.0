@@ -1,6 +1,7 @@
 <?php
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
+require_once 'helper.php';
 
 $numero = isset($_GET['q']) ? trim($_GET['q']) : '';
 
@@ -9,21 +10,18 @@ if (strlen($numero) < 1) {
     exit;
 }
 
-// chiamo l'autocomplete per numero treno
 $url = 'http://www.viaggiatreno.it/infomobilita/resteasy/viaggiatreno/cercaNumeroTrenoTrenoAutocomplete/' . urlencode($numero);
 
-$risposta = file_get_contents($url);
+$risposta = chiama_api($url);
 
 if ($risposta === false || trim($risposta) === '') {
     echo json_encode([]);
     exit;
 }
 
-// il formato e' "2946 - MILANO CENTRALE|S01700\n2946 - ..."
+// formato risposta: "2946 - MILANO CENTRALE|S01700\n..."
 $risultati = [];
-$righe = explode("\n", trim($risposta));
-
-foreach ($righe as $riga) {
+foreach (explode("\n", trim($risposta)) as $riga) {
     if (trim($riga) === '') continue;
     $parti = explode('|', $riga);
     if (count($parti) >= 2) {
